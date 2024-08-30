@@ -1,0 +1,65 @@
+package com.example.practicakotli.Analizadores;
+import java_cup.runtime.*;
+import java.util.ArrayList;
+import java.util.List;
+
+parser code
+{:
+  private List<String> resultados = new ArrayList<>();
+
+  //Metodo Recuperable ante algun Error Sintactico
+  public void syntax_error(Symbol s){
+        System.out.println("Errore Sintactico en la linea " + (s.left) +
+        "en la Columna " + s.right + " , No se esperaba este componente:  " + s.value + ",");
+  }
+
+  //Metodo No Recuperable ante algun Error Sintactico
+  public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{
+        System.out.println("Error Sintactico Irrecuperable en la linea: " + (s.left) +
+        "en la Columna: " + s.right + " , Componente es: " + s.value + " no reconocido.");
+  }
+
+  public List<String> getResultados(){
+     return resultados;
+  }
+
+:}
+
+terminal String PAR1, PAR2;
+terminal String MAS,MENOS,POR,DIVISION;
+terminal String ENTERO;
+terminal String DECIMAL;
+terminal String UMENOS;
+
+non terminal ini;
+non terminal instrucciones;
+non terminal instruccion;
+non terminal Double expresion;
+
+precedence left MAS,MENOS;
+precedence left POR,DIVISION;
+precedence right UMENOS;
+
+start with ini;
+
+ini::=instrucciones;
+
+instrucciones ::= instruccion instrucciones
+                | instruccion
+                | error instrucciones
+;
+
+instruccion ::= expresion:a {:System.out.println("El valor de la expresión es: " + a);
+                                         resultados.add(a.toString());
+                                        :}
+;
+
+expresion ::= MENOS expresion:a                       {: RESULT = a*-1; :}%prec UMENOS
+            | expresion:a    MAS       expresion:b    {: RESULT = a+b; :}
+            | expresion:a    MENOS     expresion:b    {: RESULT = a-b; :}
+            | expresion:a    POR       expresion:b    {: RESULT = a*b; :}
+            | expresion:a    DIVISION  expresion:b    {: RESULT = a/b; :}
+            | ENTERO:a                                {: RESULT = new Double(a); :}
+            | DECIMAL:a                               {: RESULT = new Double(a); :}
+            | PAR1 expresion:a PAR2                   {: RESULT = a; :}
+;
